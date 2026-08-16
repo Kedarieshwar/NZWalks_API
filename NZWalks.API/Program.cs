@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using NZWalks.API.Repositories;
 using NZWalks.API.Walks;
 
 namespace NZWalks.API
@@ -19,6 +20,8 @@ namespace NZWalks.API
             // Register NZWalksDBContext with SQL Server configuration
             builder.Services.AddDbContext<NZWalksDBContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksConnectionString")));
+
+            builder.Services.AddScoped<IRegionRepository,SQLRegionRepository>();
 
 
             var app = builder.Build();
