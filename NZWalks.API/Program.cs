@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using NZWalks.API.Mappings;
 using NZWalks.API.Repositories;
 using NZWalks.API.Walks;
 
@@ -22,6 +23,9 @@ namespace NZWalks.API
                 options.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksConnectionString")));
 
             builder.Services.AddScoped<IRegionRepository,SQLRegionRepository>();
+
+
+            builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 
             var app = builder.Build();
