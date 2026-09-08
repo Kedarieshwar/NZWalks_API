@@ -1,11 +1,12 @@
-﻿using NZWalks.API.Models.DTO;
-using NZWalks.API.Models.Domain;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NZWalks.API.Walks;
 using Microsoft.EntityFrameworkCore;
+using NZWalks.API.CustomActionFilters;
+using NZWalks.API.Models.Domain;
+using NZWalks.API.Models.DTO;
 using NZWalks.API.Repositories;
-using AutoMapper;
+using NZWalks.API.Walks;
 
 namespace NZWalks.API.Controllers
 {
@@ -39,35 +40,55 @@ namespace NZWalks.API.Controllers
         public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
             //Find() only takes the primary key so you can use linq to be more flexible
-            var regionsDomain = await dbContext.Regions.FirstOrDefaultAsync(x => x.Id == id);
+            var regionsDomain = await regionRepository.GetRegionByIdAsync(id);
             //var region = dbContext.Regions.Find(id);
-      
-            return Ok(mapper.Map<List<Region>>(regionsDomain));
+            if(regionsDomain == null)
+            {
+                return NotFound();
+            }
+            return Ok(mapper.Map<RegionDTO>(regionsDomain));
         }
 
         [HttpPost]
+        [ValidateModel]
         public async Task<IActionResult> Create([FromBody] AddRegionRequestDTO addRegionRequestDTO)
         {
-            var regionDomainModel = mapper.Map<Region>(addRegionRequestDTO);
+            if(ModelState.IsValid)
+            {
+                var regionDomainModel = mapper.Map<Region>(addRegionRequestDTO);
 
-            await regionRepository.CreateAsync(regionDomainModel);
-            var regionDTO = mapper.Map<RegionDTO>(regionDomainModel);
+                await regionRepository.CreateAsync(regionDomainModel);
+                var regionDTO = mapper.Map<RegionDTO>(regionDomainModel);
 
-            return CreatedAtAction(nameof(GetById), new { id = regionDTO.Id }, regionDTO);
+                return CreatedAtAction(nameof(GetById), new { id = regionDTO.Id }, regionDTO);
+            }
+            else
+            {
+                return BadRequest(ModelState);
+            }
+            
         }
 
         [HttpPut]
         [Route("{id:guid}")]
+        [ValidateModel]
         public async Task<IActionResult> Update([FromRoute]Guid id, [FromBody] UpdateRegionRequestDTO updateRegionRequestDTO)
         {
-            var regionDomainModel = mapper.Map<Region>(updateRegionRequestDTO);
-            regionDomainModel = await regionRepository.UpdateAsync(id, regionDomainModel);
-            if (regionDomainModel == null)
+            if(ModelState.IsValid)
             {
-                return NotFound();
-            }
+                var regionDomainModel = mapper.Map<Region>(updateRegionRequestDTO);
+                regionDomainModel = await regionRepository.UpdateAsync(id, regionDomainModel);
+                if (regionDomainModel == null)
+                {
+                    return NotFound();
+                }
 
-            return Ok(mapper.Map<RegionDTO>(regionDomainModel));
+                return Ok(mapper.Map<RegionDTO>(regionDomainModel));
+            }
+            else
+            {
+                return BadRequest(ModelState);
+            }
         }
 
         [HttpDelete]
